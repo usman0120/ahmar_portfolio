@@ -1,9 +1,139 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { validateLoginForm, hasErrors, type LoginFormErrors } from '../../utils/validators';
 import { fadeUp, scale } from '../../utils/animations';
+
+// Custom Input Component - MOVED OUTSIDE
+const InputField: React.FC<{
+  name: string;
+  label: string;
+  type: 'text' | 'email' | 'password';
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder: string;
+  required: boolean;
+  error?: string;
+}> = memo(({ name, label, type, value, onChange, placeholder, required, error }) => {
+  return (
+    <div className="flex flex-col space-y-2">
+      <label className="text-sm font-medium text-text-dark">
+        {label} {required && <span className="text-primary">*</span>}
+      </label>
+      <input
+        name={name}
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        required={required}
+        className={`
+          w-full px-4 py-3 
+          border border-gray-300 
+          rounded-2xl 
+          focus:outline-none 
+          focus:ring-2 
+          focus:ring-primary 
+          focus:border-transparent 
+          transition-all 
+          duration-300
+          bg-white
+          text-text-dark
+          placeholder-gray-400
+          ${error ? 'border-red-500 focus:ring-red-500' : ''}
+        `}
+      />
+      {error && (
+        <p className="text-red-500 text-sm">{error}</p>
+      )}
+    </div>
+  );
+});
+
+InputField.displayName = 'InputField';
+
+// Custom Button Component - MOVED OUTSIDE
+const Button: React.FC<{
+  type?: 'button' | 'submit' | 'reset';
+  variant?: 'primary' | 'secondary' | 'outline';
+  size?: 'sm' | 'md' | 'lg';
+  onClick?: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+  className?: string;
+}> = memo(({ 
+  type = 'button', 
+  variant = 'primary', 
+  size = 'md', 
+  onClick, 
+  disabled = false, 
+  children, 
+  className = '' 
+}) => {
+  const baseClasses = 'rounded-2xl font-medium transition-all duration-300 focus:outline-none focus:ring-2';
+  
+  const variantClasses = {
+    primary: 'bg-primary text-white hover:shadow-lg hover:scale-105 focus:ring-primary focus:ring-opacity-50',
+    secondary: 'bg-secondary text-text-dark hover:shadow-lg hover:scale-105 focus:ring-secondary focus:ring-opacity-50',
+    outline: 'border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-white focus:ring-primary focus:ring-opacity-50'
+  };
+
+  const sizeClasses = {
+    sm: 'px-4 py-2 text-sm',
+    md: 'px-6 py-3 text-base',
+    lg: 'px-8 py-4 text-lg'
+  };
+
+  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className} ${
+    disabled ? 'opacity-50 cursor-not-allowed' : ''
+  }`;
+
+  return (
+    <motion.button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={classes}
+      whileHover={!disabled ? { scale: 1.05 } : {}}
+      whileTap={!disabled ? { scale: 0.95 } : {}}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+    >
+      {children}
+    </motion.button>
+  );
+});
+
+Button.displayName = 'Button';
+
+// Custom Card Component - MOVED OUTSIDE
+const Card: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+  hover?: boolean;
+}> = memo(({ 
+  children, 
+  className = '', 
+  hover = false 
+}) => {
+  const baseClasses = 'rounded-2xl shadow-lg bg-white border border-gray-100';
+  const hoverClasses = hover ? 'transition-transform duration-300 hover:-translate-y-2 hover:shadow-xl' : '';
+
+  const classes = `${baseClasses} ${hoverClasses} ${className}`;
+
+  return (
+    <motion.div
+      className={classes}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      {children}
+    </motion.div>
+  );
+});
+
+Card.displayName = 'Card';
 
 const AdminLogin: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -29,7 +159,8 @@ const AdminLogin: React.FC = () => {
     }
   }, [user, navigate, from]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Use useCallback to memoize the handler
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -37,22 +168,19 @@ const AdminLogin: React.FC = () => {
     }));
     
     // Clear error when user starts typing
-    if (errors[name as keyof typeof errors]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
-  };
+    setErrors(prev => ({
+      ...prev,
+      [name]: ''
+    }));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation(); // Prevent event bubbling
     
     const validationErrors = validateLoginForm(formData);
     setErrors(prev => ({
       ...validationErrors,
-      submit: prev.submit // Preserve submit error if it exists
+      submit: prev.submit
     }));
     
     // Convert LoginFormErrors to Record<string, string> for hasErrors function
@@ -79,130 +207,6 @@ const AdminLogin: React.FC = () => {
         setIsSubmitting(false);
       }
     }
-  };
-
-  // Custom Input Component
-  const InputField: React.FC<{
-    name: string;
-    label: string;
-    type: 'text' | 'email' | 'password';
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    placeholder: string;
-    required: boolean;
-    error?: string;
-  }> = ({ name, label, type, value, onChange, placeholder, required, error }) => {
-    return (
-      <div className="flex flex-col space-y-2">
-        <label className="text-sm font-medium text-text-dark">
-          {label} {required && <span className="text-primary">*</span>}
-        </label>
-        <input
-          name={name} // ADDED: name attribute
-          type={type}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          required={required}
-          className={`
-            w-full px-4 py-3 
-            border border-gray-300 
-            rounded-2xl 
-            focus:outline-none 
-            focus:ring-2 
-            focus:ring-primary 
-            focus:border-transparent 
-            transition-all 
-            duration-300
-            bg-white
-            text-text-dark
-            placeholder-gray-400
-            ${error ? 'border-red-500 focus:ring-red-500' : ''}
-          `}
-        />
-        {error && (
-          <p className="text-red-500 text-sm">{error}</p>
-        )}
-      </div>
-    );
-  };
-
-  // Custom Button Component
-  const Button: React.FC<{
-    type?: 'button' | 'submit' | 'reset';
-    variant?: 'primary' | 'secondary' | 'outline';
-    size?: 'sm' | 'md' | 'lg';
-    onClick?: () => void;
-    disabled?: boolean;
-    children: React.ReactNode;
-    className?: string;
-  }> = ({ 
-    type = 'button', 
-    variant = 'primary', 
-    size = 'md', 
-    onClick, 
-    disabled = false, 
-    children, 
-    className = '' 
-  }) => {
-    const baseClasses = 'rounded-2xl font-medium transition-all duration-300 focus:outline-none focus:ring-2';
-    
-    const variantClasses = {
-      primary: 'bg-primary text-white hover:shadow-lg hover:scale-105 focus:ring-primary focus:ring-opacity-50',
-      secondary: 'bg-secondary text-text-dark hover:shadow-lg hover:scale-105 focus:ring-secondary focus:ring-opacity-50',
-      outline: 'border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-white focus:ring-primary focus:ring-opacity-50'
-    };
-
-    const sizeClasses = {
-      sm: 'px-4 py-2 text-sm',
-      md: 'px-6 py-3 text-base',
-      lg: 'px-8 py-4 text-lg'
-    };
-
-    const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className} ${
-      disabled ? 'opacity-50 cursor-not-allowed' : ''
-    }`;
-
-    return (
-      <motion.button
-        type={type}
-        onClick={onClick}
-        disabled={disabled}
-        className={classes}
-        whileHover={!disabled ? { scale: 1.05 } : {}}
-        whileTap={!disabled ? { scale: 0.95 } : {}}
-        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-      >
-        {children}
-      </motion.button>
-    );
-  };
-
-  // Custom Card Component
-  const Card: React.FC<{
-    children: React.ReactNode;
-    className?: string;
-    hover?: boolean;
-  }> = ({ 
-    children, 
-    className = '', 
-    hover = false 
-  }) => {
-    const baseClasses = 'rounded-2xl shadow-lg bg-white border border-gray-100';
-    const hoverClasses = hover ? 'transition-transform duration-300 hover:-translate-y-2 hover:shadow-xl' : '';
-
-    const classes = `${baseClasses} ${hoverClasses} ${className}`;
-
-    return (
-      <motion.div
-        className={classes}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        {children}
-      </motion.div>
-    );
   };
 
   return (
@@ -242,7 +246,7 @@ const AdminLogin: React.FC = () => {
             className="space-y-6"
           >
             <InputField
-              name="email" // ADDED: name attribute
+              name="email"
               label="Email Address"
               type="email"
               value={formData.email}
@@ -253,7 +257,7 @@ const AdminLogin: React.FC = () => {
             />
 
             <InputField
-              name="password" // ADDED: name attribute
+              name="password"
               label="Password"
               type="password"
               value={formData.password}
@@ -290,20 +294,6 @@ const AdminLogin: React.FC = () => {
               )}
             </Button>
           </motion.form>
-
-          {/* Demo Info */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-8 p-4 bg-secondary bg-opacity-30 rounded-2xl text-center"
-          >
-            <p className="text-sm text-text-light">
-              <strong>Demo Credentials:</strong><br />
-              Email: admin@ahmar.com<br />
-              Password: password123
-            </p>
-          </motion.div>
 
           {/* Back to Site Link */}
           <motion.div

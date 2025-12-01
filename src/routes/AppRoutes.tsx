@@ -21,6 +21,7 @@ import ProfileSettings from '../pages/Admin/ProfileSettings';
 // Layout Components
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import Settings from '../pages/Admin/Settings';
 
 // Animation variants for page transitions
 const pageVariants = {
@@ -337,8 +338,30 @@ const AppRoutes: React.FC = () => {
           }
         />
 
+        {/* Protected Settings Routes */}
+        <Route
+          path="/admin/settings"
+          element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <motion.div
+                  key="admin-settings"
+                  initial="initial"
+                  animate="in"
+                  exit="out"
+                  variants={pageVariants}
+                  transition={pageTransition}
+                >
+                  <Settings />
+                </motion.div>
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+
         {/* Redirects */}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+
         
         {/* 404 Fallback */}
         <Route

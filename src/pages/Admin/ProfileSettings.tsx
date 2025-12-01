@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useProfile } from '../../hooks/useFirestore';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
@@ -10,6 +10,10 @@ const ProfileSettings: React.FC = () => {
   const { profile, loading, updateProfile } = useProfile();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<ProfileFormData>({
     name: '',
@@ -58,9 +62,103 @@ const ProfileSettings: React.FC = () => {
           email: profile.socialLinks?.email || ''
         }
       });
+      
+      // Set image preview if profileImage is a Base64 string
+      if (profile.profileImage && profile.profileImage.startsWith('data:image')) {
+        setImagePreview(profile.profileImage);
+      }
     }
   }, [profile]);
 
+  // Function to convert image to Base64
+  const convertImageToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onloadstart = () => {
+        setIsUploading(true);
+        setUploadProgress(10);
+      };
+      
+      reader.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = (event.loaded / event.total) * 100;
+          setUploadProgress(progress);
+        }
+      };
+      
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        setUploadProgress(100);
+        setTimeout(() => {
+          setIsUploading(false);
+          setUploadProgress(0);
+        }, 500);
+        resolve(base64String);
+      };
+      
+      reader.onerror = (error) => {
+        setIsUploading(false);
+        setUploadProgress(0);
+        reject(error);
+      };
+      
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Handle image upload
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validImageTypes.includes(file.type)) {
+      alert('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+    if (file.size > maxSize) {
+      alert('Image size should be less than 2MB');
+      return;
+    }
+
+    try {
+      const base64Image = await convertImageToBase64(file);
+      
+      // Update form data with Base64 image
+      setFormData(prev => ({
+        ...prev,
+        profileImage: base64Image
+      }));
+      
+      // Set preview
+      setImagePreview(base64Image);
+      
+    } catch (error) {
+      console.error('Error converting image to Base64:', error);
+      alert('Failed to upload image. Please try again.');
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  // Handle remove image
+  const handleRemoveImage = () => {
+    setFormData(prev => ({
+      ...prev,
+      profileImage: ''
+    }));
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
@@ -180,6 +278,88 @@ const ProfileSettings: React.FC = () => {
           onSubmit={handleSubmit}
           className="space-y-8"
         >
+          {/* Profile Image Upload Section */}
+          <motion.div variants={fadeUp}>
+            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+              <h2 className="text-2xl font-heading font-bold mb-6 text-text-dark">
+                Profile Image
+              </h2>
+              
+              <div className="flex flex-col items-center space-y-6">
+                {/* Image Preview */}
+                <div className="relative">
+                  <div className="w-48 h-48 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-100">
+                    {imagePreview ? (
+                      <img
+                        src={imagePreview}
+                        alt="Profile Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Remove button */}
+                  {imagePreview && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+
+                {/* Upload Controls */}
+                <div className="w-full max-w-md space-y-4">
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="profile-image-upload"
+                  />
+                  
+                  {/* Upload button */}
+                  <label
+                    htmlFor="profile-image-upload"
+                    className="block w-full px-4 py-3 bg-primary text-white rounded-2xl font-medium text-center cursor-pointer hover:bg-opacity-90 transition-colors"
+                  >
+                    {isUploading ? 'Uploading...' : 'Upload New Profile Image'}
+                  </label>
+                  
+                  {/* Upload progress */}
+                  {isUploading && (
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Instructions */}
+                  <div className="text-center text-sm text-text-light space-y-1">
+                    <p>• Click above to upload a new profile image</p>
+                    <p>• Supported formats: JPEG, PNG, GIF, WebP</p>
+                    <p>• Max file size: 2MB</p>
+                    <p>• Image will be converted to Base64 and stored in database</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
           {/* Personal Information */}
           <motion.div variants={fadeUp}>
             <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
@@ -251,10 +431,10 @@ const ProfileSettings: React.FC = () => {
                   )}
                 </div>
 
-                {/* Profile Image URL Input */}
+                {/* Profile Image URL Input (Fallback) */}
                 <div className="flex flex-col space-y-2">
                   <label className="text-sm font-medium text-text-dark">
-                    Profile Image URL
+                    Profile Image URL (Alternative)
                   </label>
                   <input
                     type="url"
@@ -264,6 +444,9 @@ const ProfileSettings: React.FC = () => {
                     placeholder="https://example.com/profile.jpg"
                     className="px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
                   />
+                  <p className="text-xs text-text-light">
+                    Use this if you prefer URL instead of upload
+                  </p>
                 </div>
 
                 {/* Location Input */}
@@ -470,7 +653,7 @@ const ProfileSettings: React.FC = () => {
               <div className="bg-gray-50 rounded-2xl p-6">
                 <div className="flex items-start space-x-6">
                   <img
-                    src={formData.profileImage || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&h=200&q=80"}
+                    src={imagePreview || formData.profileImage || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&h=200&q=80"}
                     alt="Profile Preview"
                     className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
                   />
@@ -506,7 +689,7 @@ const ProfileSettings: React.FC = () => {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploading}
               className="px-8 py-3 bg-primary text-white rounded-2xl font-medium transition-all duration-300 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (

@@ -41,10 +41,10 @@ const Navbar: React.FC = () => {
           {/* Logo */}
           <motion.div
             whileHover={{ scale: 1.05 }}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 ml-4"
           >
             <Link to="/" className="text-2xl font-heading font-bold text-gradient">
-              Ahmar
+              AHMAR
             </Link>
           </motion.div>
 

@@ -107,7 +107,6 @@ const Home: React.FC = () => {
 
   // Safe profile data extraction
   const profileName = profile?.name || 'Muhammad Ahmar Saleem';
-  const firstName = profileName.split(' ')[0] || 'Ahmar';
   const profileTitle = profile?.title || 'Flutter Developer & Software Engineering Student';
   const profileImage = profile?.profileImage || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&h=200&q=80";
   const resumeUrl = profile?.resumeUrl || "#";
@@ -132,7 +131,7 @@ const Home: React.FC = () => {
             variants={heroAnimations.container}
             initial="initial"
             animate="animate"
-            className="max-w-4xl mx-auto"
+            className="max-w-4xl mx-auto mb-4"
           >
             {/* Profile Image */}
             <motion.div
@@ -142,7 +141,7 @@ const Home: React.FC = () => {
               <motion.img
                 src={profileImage}
                 alt={profileName}
-                className="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-lg object-cover"
+                className="w-56 h-56 rounded-full mx-auto mt-16 border-4 border-white shadow-lg object-cover"
                 whileHover={{ scale: 1.1 }}
                 transition={{ type: "spring", stiffness: 300 }}
               />
@@ -154,13 +153,13 @@ const Home: React.FC = () => {
               className="text-5xl md:text-7xl font-heading font-bold mb-6"
             >
               <span className="text-text-dark">Hi, I'm </span>
-              <span className="text-gradient">{firstName}</span>
+              <span className="text-gradient">{profile?.name}</span>
             </motion.h1>
 
             {/* Subtitle */}
             <motion.p
               variants={fadeUp}
-              className="text-2xl md:text-3xl text-text-light mb-8 font-light"
+              className="text-2xl md:text-3xl text-text-light mb-3 font-light"
             >
               {profileTitle}
             </motion.p>
@@ -168,7 +167,7 @@ const Home: React.FC = () => {
             {/* Tagline */}
             <motion.p
               variants={fadeUp}
-              className="text-xl text-text-light mb-12 max-w-2xl mx-auto leading-relaxed"
+              className="text-xl text-text-light mb-4 max-w-2xl mx-auto leading-relaxed"
             >
               I build modern, fast, and beautiful mobile applications.
             </motion.p>
@@ -203,7 +202,7 @@ const Home: React.FC = () => {
             {/* Stats */}
             <motion.div
               variants={fadeUp}
-              className="grid grid-cols-3 gap-8 max-w-2xl mx-auto mt-16"
+              className="grid grid-cols-3 gap-8 max-w-2xl mx-4 mr-6 mt-16"
             >
               <div className="text-center">
                 <motion.div
@@ -242,20 +241,7 @@ const Home: React.FC = () => {
           </motion.div>
         </div>
 
-        {/* Scroll Indicator */}
-        <motion.div
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <div className="w-6 h-10 border-2 border-primary rounded-full flex justify-center">
-            <motion.div
-              className="w-1 h-3 bg-primary rounded-full mt-2"
-              animate={{ y: [0, 12, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-          </div>
-        </motion.div>
+        
       </section>
 
       {/* Quick About Preview */}

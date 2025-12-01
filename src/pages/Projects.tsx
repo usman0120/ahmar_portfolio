@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { useProjects } from '../hooks/useFirestore';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import { staggerContainer, scale } from '../utils/animations';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGithub } from "@fortawesome/free-brands-svg-icons";
 
 // Define Project interface
 interface Project {
@@ -150,12 +152,12 @@ const ProjectCard: React.FC<{
           {/* Project Links */}
           <div className="flex space-x-3 mt-auto">
             <CustomButton
-              variant="outline"
+              variant="secondary"
               size="sm"
-              className="flex-1"
+              className="rounded-full"
               href={project.githubUrl}
             >
-              GitHub
+            <FontAwesomeIcon icon={faGithub} />
             </CustomButton>
             <CustomButton
               variant="primary"
@@ -429,5 +431,6 @@ const Projects: React.FC = () => {
     </div>
   );
 };
+
 
 export default Projects;

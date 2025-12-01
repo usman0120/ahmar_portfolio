@@ -2,12 +2,68 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ahmar-portfolio</title>
+    <meta name="description" content="Ahmar's portfolio showcasing projects and skills in web development">
+    <meta name="keywords" content="web developer, portfolio, react, typescript, frontend">
+    <meta name="author" content="Ahmar">
+    <link rel="canonical" href="https://yourdomain.com">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Ahmar - Web Developer Portfolio">
+    <meta property="og:description" content="Showcasing projects and skills in web development">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Ahmar - Web Developer Portfolio">
+    <meta name="twitter:description" content="Showcasing projects and skills in web development">
+    
+    <!-- Favicon with AS logo -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23628ce3'/><text x='50%' y='50%' font-size='60' font-family='Arial, sans-serif' font-weight='bold' fill='white' text-anchor='middle' dy='.3em'>AS</text></svg>">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/src/main.tsx" as="script">
+    
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Ahmar",
+      "jobTitle": "Web Developer",
+      "url": "https://yourdomain.com",
+      "sameAs": []
+    }
+    </script>
+    
+    <title>Ahmar Saleem - Portfolio</title>
   </head>
   <body>
+ 
+    
+    <!-- Pre-rendered minimal content for SEO -->
+    <noscript>
+      <div style="
+        max-width: 800px;
+        margin: 100px auto;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+      ">
+        <h1>Ahmar's Portfolio</h1>
+        <p>Web developer specializing in React, TypeScript, and modern frontend technologies.</p>
+        <p>Please enable JavaScript to view the full portfolio experience.</p>
+      </div>
+    </noscript>
+    
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Defer non-critical script loading -->
+    <script type="module" src="/src/main.tsx" defer></script>
+    
+    <!-- Minimal analytics placeholder -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+    </script>
   </body>
 </html>
